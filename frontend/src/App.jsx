@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import './App.css'
 
 function App() {
   const [items, setItems] = useState([])
-  const [left, setLeft] = useState(0)
+  
   
   useEffect(() => {
-    fetch('/api/getTodos').then(r => r.json()).then(({ items, left }) => {
+    fetch('/api/getTodos').then(r => r.json()).then(({ items }) => {
       setItems(items)
-      setLeft(left)
     })
   }, []);
+
+  const left = useMemo(() => items.filter(item => !item.completed).length, [items]);
 
   return (
     <>
@@ -19,7 +20,18 @@ function App() {
     <ul className="todoItems">
       {items.map((item, index) => (
         <li key={index} className="item">
-          {item.completed === true? <span className="completed">{item.thing}</span> : <span>{item.thing}</span>}
+          <span 
+            className = {item.completed ? "completed" : null} 
+            onClick = {async event => {
+              await fetch (`/api/mark${item.completed ? 'Un' :''}Complete`, {
+                method: 'put',
+                headers: {'Content-Type' : 'application/json'},
+                body: JSON.stringify({ itemFromJS: item.thing})
+              })
+              setItems( items.map(i => i.thing === item.thing ? {...i, completed: !i.completed} : i))
+            }}
+          >{item.thing}</span>
+
           <span className="fa fa-trash" onClick={async event => {
             await fetch('/api/deleteItem', {
               method: 'delete',
@@ -30,7 +42,6 @@ function App() {
             })
             
             setItems(items.filter(loopItem => loopItem._id !== item._id))
-            setLeft(prev => prev -1)
           }}></span>
         </li>
       ))}
@@ -54,7 +65,7 @@ function App() {
       })
       const newItem = await response.json()
       setItems(prev => [...prev, newItem])
-      setLeft(prev => prev += 1)
+      event.target.reset()
     }}>
         <input type="text" placeholder="Thing To Do" name="todoItem" />
         <input type="submit" />

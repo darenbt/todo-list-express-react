@@ -23,8 +23,7 @@ app.use(express.json())
 
 app.get('/api/getTodos',async (request, response)=>{
     const todoItems = await db.collection('todos').find().toArray()
-    const itemsLeft = await db.collection('todos').countDocuments({completed: false})
-    response.json({ items: todoItems, left: itemsLeft })
+    response.json({ items: todoItems })
     // db.collection('todos').find().toArray()
     // .then(data => {
     //     db.collection('todos').countDocuments({completed: false})
